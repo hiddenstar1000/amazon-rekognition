@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation template for AWS Rekognition face detection application
+
+Parameters:
+  ImageBucketName:
+    Type: String
+    Description: Name of the S3 bucket to store images
+
+Resources:
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref ImageBucketName
+
+  RekognitionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: RekognitionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: RekognitionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rekognition:DetectFaces
+                Resource: '*'
+
+  FaceDetectionLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: FaceDetectionLambdaFunction
+      Handler: index.handler
+      Role: !GetAtt RekognitionRole.Arn
+      Code:
+        S3Bucket: !Ref AWS::StackName
+        S3Key: face-detection-lambda.zip
+      Runtime: nodejs14.x
+      Timeout: 30
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref ImageBucketName
+      Events:
+        ImageUpload:
+          Type: S3
+          Properties:
+            Bucket: !Ref ImageBucket
+            Events: s3:ObjectCreated:*
+
+Outputs:
+  RekognitionRoleArn:
+    Description: ARN of the IAM role for AWS Rekognition
+    Value: !GetAtt RekognitionRole.Arn
+
+  FaceDetectionLambdaFunctionArn:
+    Description: ARN of the Lambda function for face detection
+    Value: !GetAtt FaceDetectionLambdaFunction.Arn
