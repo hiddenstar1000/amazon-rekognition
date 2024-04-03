@@ -23,13 +23,15 @@ exports.handler = async (event, context) => {
       console.log("Faces detected:");
       data.FaceDetails.forEach((face, index) => {
         console.log(`Face ${index + 1}:`);
-        console.log(`  Age: ${face.AgeRange.Low}-${face.AgeRange.High}`);
-        console.log(`  Gender: ${face.Gender.Value}`);
-        console.log(
-          `  Emotions: ${face.Emotions.map((emotion) => emotion.Type).join(
-            ", "
-          )}`
-        );
+        console.log(`  Age: ${face?.AgeRange?.Low}-${face?.AgeRange?.High}`);
+        console.log(`  Gender: ${face?.Gender?.Value}`);
+        if (face?.Emotions?.length > 0) {
+          console.log(
+            `  Emotions: ${face.Emotions.map((emotion) => emotion.Type).join(
+              ", "
+            )}`
+          );
+        }
       });
     } else {
       console.log("No faces detected.");
